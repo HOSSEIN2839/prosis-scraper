@@ -5,8 +5,8 @@ import express from "express";
 const app = express();
 app.use(express.json());
 
-const ADMIN_ID = 1427556598;
-const BOT_TOKEN = process.env.BOT_TOKEN; // از Render environment variables
+const ADMIN_ID = "1427556598";
+const BOT_TOKEN = "7834357750:AAEU_UCsxNAWjoKOO2Sqra3b6kWhQtKnJEA"; // از Render environment variables
 
 app.get("/", (req, res) => res.send("Telegram Bot is running ✅"));
 
