@@ -1,61 +1,67 @@
-const express = require("express");
-const axios = require("axios");
-const cheerio = require("cheerio");
-const cors = require("cors");
+import { sendTelegramMessage, sendTelegramPhoto } from "./telegram.js";
+import { getProducts } from "./scraper.js";
+import express from "express";
 
 const app = express();
-app.use(cors());
+app.use(express.json());
+
+const ADMIN_ID = 1427556598;
+const BOT_TOKEN = process.env.BOT_TOKEN; // از Render environment variables
+
+app.get("/", (req, res) => res.send("Telegram Bot is running ✅"));
+
+app.post("/", async (req, res) => {
+  const update = req.body;
+  const message = update.message;
+  if (!message) return res.send("ok");
+
+  const chatId = message.chat.id;
+  const text = message.text || "";
+
+  // /start
+  if (text === "/start") {
+    await sendTelegramMessage(chatId, "به ربات صبحانه شیروان خوش آمدید 🍞🥛", {
+      keyboard: [
+        [{ text: "منوی محصولات 🍽" }],
+        [{ text: "ساعات کاری ⏰" }, { text: "آدرس 📍" }]
+      ],
+      resize_keyboard: true
+    });
+    return res.send("ok");
+  }
+
+  // منوی محصولات
+  if (text === "منوی محصولات 🍽") {
+    await sendTelegramMessage(chatId, "⏳ در حال بارگیری محصولات...");
+    const items = await getProducts();
+
+    if (items.length === 0) {
+      await sendTelegramMessage(chatId, `❌ هیچ محصولی پیدا نشد!
+🔍 تعداد محصولات پیدا شده: 0`);
+      return res.send("ok");
+    }
+
+    for (const p of items) {
+      await sendTelegramPhoto(chatId, p.image, `🍽 <b>${p.title}</b>\n💰 قیمت: ${p.price}\n🔗 <a href="${p.url}">مشاهده محصول</a>`);
+    }
+
+    return res.send("ok");
+  }
+
+  // ساعات کاری
+  if (text === "ساعات کاری ⏰") {
+    await sendTelegramMessage(chatId, "⏰ هر روز از 7 صبح تا 2 ظهر");
+    return res.send("ok");
+  }
+
+  // آدرس
+  if (text === "آدرس 📍") {
+    await sendTelegramMessage(chatId, "📍 شیروان – مرکز شهر – صبحانه شیروان");
+    return res.send("ok");
+  }
+
+  return res.send("ok");
+});
 
 const PORT = process.env.PORT || 3000;
-const TARGET_URL = "https://prosis.ir/bazar/store/4869";
-
-app.get("/", (req, res) => {
-  res.send("Prosis Scraper API is running ⚡️");
-});
-
-// -------------------------
-//     محصولات
-// -------------------------
-app.get("/products", async (req, res) => {
-  try {
-    const { data: html } = await axios.get(TARGET_URL, {
-      headers: {
-        "User-Agent": "Mozilla/5.0"
-      }
-    });
-
-    const $ = cheerio.load(html);
-    const items = [];
-
-    $(".col-md-3.col-6.mb-3").each((_, el) => {
-      const block = $(el);
-
-      const title = block.find("h5.font-weight-bold").text().trim();
-      const price = block.find("p.text-success.font-weight-bold").text().trim();
-      const image = block.find("img").attr("src");
-      const url = block.find("a").attr("href");
-
-      if (title && price && image && url) {
-        items.push({
-          title,
-          price,
-          image: "https://prosis.ir" + image,
-          url: "https://prosis.ir" + url
-        });
-      }
-    });
-
-    res.json(items);
-
-  } catch (err) {
-    console.error("❌ Scraper Error:", err);
-    res.status(500).json({
-      error: err.message,
-      details: "مشکلی در گرفتن اطلاعات رخ داده است."
-    });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on Render port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Bot is running on port ${PORT}`));
