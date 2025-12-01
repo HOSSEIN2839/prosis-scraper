@@ -7,7 +7,7 @@ app.use(express.json());
 
 // ==== اطلاعات ربات (همانطور که گفتی، بدون تغییر) ====
 const ADMIN_ID = "1427556598";
-const BOT_TOKEN = "7834357750:AAEU_UCsxNAWjoKOO2Sqra3b6kWhQtKnJEA";
+const BOT_TOKEN = "8351783060:AAE93rvP10AFnR_xea8JaomIQzDDJo_HRbE";
 
 // مسیر اصلی برای تست ربات
 app.get("/", (req, res) => res.send("Telegram Bot is running ✅"));
