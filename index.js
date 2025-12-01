@@ -5,12 +5,15 @@ import express from "express";
 const app = express();
 app.use(express.json());
 
+// ==== اطلاعات ربات (همانطور که گفتی، بدون تغییر) ====
 const ADMIN_ID = "1427556598";
-const BOT_TOKEN = "7834357750:AAEU_UCsxNAWjoKOO2Sqra3b6kWhQtKnJEA"; // از Render environment variables
+const BOT_TOKEN = "7834357750:AAEU_UCsxNAWjoKOO2Sqra3b6kWhQtKnJEA";
 
+// مسیر اصلی برای تست ربات
 app.get("/", (req, res) => res.send("Telegram Bot is running ✅"));
 
-app.post("/", async (req, res) => {
+// مسیر Webhook (تلگرام باید به همین وصل بشه)
+app.post("/webhook", async (req, res) => {
   const update = req.body;
   const message = update.message;
   if (!message) return res.send("ok");
@@ -18,7 +21,7 @@ app.post("/", async (req, res) => {
   const chatId = message.chat.id;
   const text = message.text || "";
 
-  // /start
+  // فرمان /start
   if (text === "/start") {
     await sendTelegramMessage(chatId, "به ربات صبحانه شیروان خوش آمدید 🍞🥛", {
       keyboard: [
@@ -36,13 +39,14 @@ app.post("/", async (req, res) => {
     const items = await getProducts();
 
     if (items.length === 0) {
-      await sendTelegramMessage(chatId, `❌ هیچ محصولی پیدا نشد!
-🔍 تعداد محصولات پیدا شده: 0`);
+      await sendTelegramMessage(chatId, `❌ هیچ محصولی پیدا نشد!\n🔍 تعداد محصولات پیدا شده: 0`);
       return res.send("ok");
     }
 
     for (const p of items) {
-      await sendTelegramPhoto(chatId, p.image, `🍽 <b>${p.title}</b>\n💰 قیمت: ${p.price}\n🔗 <a href="${p.url}">مشاهده محصول</a>`);
+      await sendTelegramPhoto(chatId, p.image, `🍽 <b>${p.title}</b>\n💰 قیمت: ${p.price}\n🔗 <a href="${p.url}">مشاهده محصول</a>`, {
+        parse_mode: "HTML"
+      });
     }
 
     return res.send("ok");
@@ -63,5 +67,6 @@ app.post("/", async (req, res) => {
   return res.send("ok");
 });
 
+// پورت Render یا لوکال
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Bot is running on port ${PORT}`));
